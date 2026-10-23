@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
+AlignConsecutiveMacros: true # lines up #define values
+AlignConsecutiveAssignments: true # lines up = in consecutive lines
+AlignConsecutiveDeclarations: true # lines up variable names
+AlignTrailingComments: true
+MaxEmptyLinesToKeep: 2 # allow up to 2 blank lines between groups
