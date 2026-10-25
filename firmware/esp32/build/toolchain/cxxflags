@@ -1,0 +1,6 @@
+-mlongcalls
+-fno-builtin-memcpy
+-fno-builtin-memset
+-fno-builtin-bzero
+"-specs=/home/daylyn/cotin/projects/telemtry/firmware/esp32/build/specs/picolibc.specs"
+-fno-rtti

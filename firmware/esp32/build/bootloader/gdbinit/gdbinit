@@ -1,0 +1,2 @@
+source /home/daylyn/cotin/projects/telemtry/firmware/esp32/build/bootloader/gdbinit/symbols
+source /home/daylyn/cotin/projects/telemtry/firmware/esp32/build/bootloader/gdbinit/connect
