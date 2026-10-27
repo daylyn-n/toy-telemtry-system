@@ -4,6 +4,7 @@ int main(void) {
     gpio_init();
     usart2_init();
     usart1_init();
+    i2c_init();
 
     while (1) {
         usart2_write_str("hello\r\n");
@@ -28,6 +29,38 @@ static void gpio_init(void) {
     GPIOA_MODER |= (2U << (PA9 * 2)); // alternate mode
     GPIOA_AFRH &= ~(15U << ((PA9 - 8) * 4));
     GPIOA_AFRH |= (7U << ((PA9 - 8) * 4)); // AF7 -> USART1
+}
+
+static void i2c_init(void) {
+    RCC_APB1ENR |= (1U << I2C1_REG);
+
+    RCC_AHB1ENR |= (1U << GPIOB_REG);
+    GPIOB_MODER &= ~(3U << (PB8 * 2));
+    GPIOB_MODER &= ~(3U << (PB9 * 2));
+    GPIOB_MODER |= (2U << (PB8 * 2)); // alternate mode
+    GPIOB_MODER |= (2U << (PB9 * 2)); // alternate mode
+    GPIOB_AFRH |= (I2C1_AF << ((PB8 - 8) * 4));
+    GPIOB_AFRH |= (I2C1_AF << ((PB9 - 8) * 4));
+
+    // open-drain
+    GPIOB_OTYPER &= ~(1U << PB8);
+    GPIOB_OTYPER &= ~(1U << PB9);
+    GPIOB_OTYPER |= (1U << PB8);
+    GPIOB_OTYPER |= (1U << PB9);
+
+    I2C1_CR1 &= ~I2C_CR1_PE; // CR2/CCR/TRISE must be set while disabled
+
+    I2C1_CR2 &= ~I2C_CR2_FREQ_MASK;
+    I2C1_CR2 |= 16U; // APB1 = 16 MHz
+
+    // standard mode: T_high = T_low = CCR * T_pclk
+    // 100 kHz -> 10 us period -> 5 us high -> CCR = 5000 ns / 62.5 ns = 80
+    I2C1_CCR = 80; // FS = 0 (standard mode)
+
+    // TRISE = (1000 ns max rise / 62.5 ns) + 1 = 17
+    I2C1_TRISE = 17;
+
+    I2C1_CR1 |= I2C_CR1_PE;
 }
 
 // baud = 16 MHz / (16 * USARTDIV) -> USARTDIV = 8.68

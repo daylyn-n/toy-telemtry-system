@@ -1,0 +1,6 @@
+STM32 UART to ESP32
+
+
+D8 -> GPIO18
+D2 -> GPIO17
+GND -> GND

@@ -43,6 +43,56 @@ typedef uint32_t u32;
 #define USART_CR1_TE (1U << 3)  // transmitter enable
 #define USART_CR1_UE (1U << 13) // USART enable
 // ------ usart ------
+
+// ------ I2C to MPU 6050 -----
+#define GPIOB_BASE 0x40020400UL
+#define I2C1_BASE  0x40005400UL
+#define GPIOB_REG  1  // AHB1ENR bit
+#define I2C1_REG   21 // APB1ENR bit
+#define PB8        8  // SCL
+#define PB9        9  // SDA
+#define I2C1_AF    4  // AF4 -> I2C1 on PB8/PB9
+
+#define GPIOB_MODER (*(volatile u32 *)(GPIOB_BASE + 0x00))
+#define GPIOB_OTYPER                                                           \
+    (*(volatile u32 *)(GPIOB_BASE + 0x04)) // I2C pins must be open-drain
+#define GPIOB_AFRH (*(volatile u32 *)(GPIOB_BASE + 0x24))
+
+#define I2C1_CR1   (*(volatile u32 *)(I2C1_BASE + 0x00))
+#define I2C1_CR2   (*(volatile u32 *)(I2C1_BASE + 0x04))
+#define I2C1_DR    (*(volatile u32 *)(I2C1_BASE + 0x10))
+#define I2C1_SR1   (*(volatile u32 *)(I2C1_BASE + 0x14))
+#define I2C1_SR2   (*(volatile u32 *)(I2C1_BASE + 0x18))
+#define I2C1_CCR   (*(volatile u32 *)(I2C1_BASE + 0x1C))
+#define I2C1_TRISE (*(volatile u32 *)(I2C1_BASE + 0x20))
+
+#define I2C_CR1_PE    (1U << 0)  // peripheral enable
+#define I2C_CR1_START (1U << 8)  // generate start condition
+#define I2C_CR1_STOP  (1U << 9)  // generate stop condition
+#define I2C_CR1_ACK   (1U << 10) // ACK received bytes
+#define I2C_CR1_SWRST (1U << 15) // software reset
+
+#define I2C_CR2_FREQ_MASK 0x3FU // [5:0] APB1 clock in MHz
+
+#define I2C_SR1_SB   (1U << 0)  // start bit sent
+#define I2C_SR1_ADDR (1U << 1)  // address sent + ACKed
+#define I2C_SR1_BTF  (1U << 2)  // byte transfer finished
+#define I2C_SR1_RXNE (1U << 6)  // receive data register not empty
+#define I2C_SR1_TXE  (1U << 7)  // transmit data register empty
+#define I2C_SR1_AF   (1U << 10) // acknowledge failure (no ACK)
+
+#define I2C_SR2_BUSY (1U << 1) // bus busy
+
+#define I2C_CCR_FS                                                             \
+    (1U << 15) // 0 = standard mode (100 kHz), 1 = fast mode (400 kHz)
+
+// MPU-6050 (register map doc)
+#define MPU_ADDR       0x68 // 7-bit address, AD0 low
+#define MPU_PWR_MGMT_1 0x6B // write 0x00 to wake from sleep
+#define MPU_WHO_AM_I   0x75 // should read back 0x68
+
+
+// ------ I2C to MPU 6050 -----
 #define LED_PIN 5
 
 int         main(void);
@@ -53,6 +103,7 @@ static void usart2_write_str(const char *s);
 static void usart1_init(void);
 static void usart1_write_char(char c);
 static void usart1_write_str(const char *s);
+static void i2c_init(void);
 static void delay(volatile u32 count);
 
 // startup: runs on reset, before main
