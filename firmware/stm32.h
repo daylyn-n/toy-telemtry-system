@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 typedef uint32_t u32;
+typedef uint8_t  u8;
 
 // define registers (base address + offset from the reference manual)
 #define RCC_BASE    0x40023800UL
@@ -95,27 +96,4 @@ typedef uint32_t u32;
 // ------ I2C to MPU 6050 -----
 #define LED_PIN 5
 
-int         main(void);
-static void gpio_init(void);
-static void usart2_init(void);
-static void usart2_write_char(char c);
-static void usart2_write_str(const char *s);
-static void usart1_init(void);
-static void usart1_write_char(char c);
-static void usart1_write_str(const char *s);
-static void i2c_init(void);
-static void delay(volatile u32 count);
-
-// startup: runs on reset, before main
-extern void _estack(void); // defined in f446re.ld
-
-__attribute__((noreturn)) void _reset(void) {
-    main();
-    for (;;)
-        (void)0;
-}
-
-/* 16 core entries + 91 STM32F446 interrupts */
-__attribute__((section(".vectors"))) void (*const tab[16 + 91])(void) = {
-    _estack, _reset};
 #endif
