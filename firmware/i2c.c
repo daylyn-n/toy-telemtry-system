@@ -34,24 +34,44 @@ void i2c_init(void) {
 
 // read one byte from register `reg` on device `addr` (7-bit address)
 uint8_t i2c_read_reg(u8 addr, u8 reg) {
-    // TODO: wait until the bus is free (SR2 BUSY = 0)
+    // wait until the bus is free
+    while (I2C1_SR2 & I2C_SR2_BUSY)
+        ;
 
     // ---- phase 1: tell the sensor which register we want ----
-    // TODO: set CR1 START, wait for SR1 SB
-    // TODO: write (addr << 1) | 0 to DR  (0 = write)
-    // TODO: wait for SR1 ADDR, then clear it by reading SR1 then SR2
-    // TODO: wait for SR1 TXE, write `reg` to DR
-    // TODO: wait for SR1 BTF (register byte fully sent)
+    I2C1_CR1 |= I2C_CR1_START;
+    while (!(I2C1_SR1 & I2C_SR1_SB))
+        ;
+
+    I2C1_DR = (addr << 1) | 0; // 0 = write
+    while (!(I2C1_SR1 & I2C_SR1_ADDR))
+        ;
+    (void)I2C1_SR1; // clear ADDR: read SR1 then SR2
+    (void)I2C1_SR2;
+
+    while (!(I2C1_SR1 & I2C_SR1_TXE))
+        ;
+    I2C1_DR = reg;
+    while (!(I2C1_SR1 & I2C_SR1_BTF)) // register byte fully sent
+        ;
 
     // ---- phase 2: read the register's value back ----
-    // TODO: set CR1 START again (repeated start), wait for SR1 SB
-    // TODO: write (addr << 1) | 1 to DR  (1 = read)
-    // TODO: wait for SR1 ADDR
-    // TODO: clear CR1 ACK *before* clearing ADDR -- for a single byte,
-    //       the STM32 must NACK it so the sensor stops sending
-    // TODO: clear ADDR (read SR1 then SR2)
-    // TODO: set CR1 STOP
-    // TODO: wait for SR1 RXNE, read the byte from DR and return it
+    I2C1_CR1 |= I2C_CR1_START; // repeated start
+    while (!(I2C1_SR1 & I2C_SR1_SB))
+        ;
 
-    return 0;
+    I2C1_DR = (addr << 1) | 1; // 1 = read
+    while (!(I2C1_SR1 & I2C_SR1_ADDR))
+        ;
+
+    // single byte: NACK it so the sensor stops sending.
+    // ACK must be cleared *before* ADDR is cleared.
+    I2C1_CR1 &= ~I2C_CR1_ACK;
+    (void)I2C1_SR1; // clear ADDR: read SR1 then SR2
+    (void)I2C1_SR2;
+    I2C1_CR1 |= I2C_CR1_STOP;
+
+    while (!(I2C1_SR1 & I2C_SR1_RXNE))
+        ;
+    return (u8)I2C1_DR;
 }
