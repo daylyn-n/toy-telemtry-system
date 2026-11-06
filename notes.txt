@@ -4,3 +4,30 @@ STM32 UART to ESP32
 D8 -> GPIO18
 D2 -> GPIO17
 GND -> GND
+
+I2C connection to imu
+3V3 -> VCC
+GND -> GND
+D15 -> SCL
+D14 -> SDA
+
+Monitor commands
+(by-id paths stay the same even if ttyACM0/ttyACM1 numbers swap)
+STM32 = /dev/serial/by-id/usb-STMicroelectronics_STM32_STLink_066AFF505487525067181744-if02
+ESP32 = /dev/serial/by-id/usb-1a86_USB_Single_Serial_5C94130760-if00
+exit picocom: Ctrl-A then Ctrl-X
+exit idf.py monitor: Ctrl-]
+
+STM32 UART (USART2 -> ST-Link USB)
+make clean && make flash
+picocom -b 115200 /dev/serial/by-id/usb-STMicroelectronics_STM32_STLink_066AFF505487525067181744-if02
+
+ESP32 UART (receives from STM32 USART1)
+. ~/esp/esp-idf/export.sh
+cd firmware/esp32
+idf.py -p /dev/serial/by-id/usb-1a86_USB_Single_Serial_5C94130760-if00 flash monitor
+
+IMU data (STM32 prints WHO_AM_I over USART2)
+make clean && make flash
+picocom -b 115200 /dev/serial/by-id/usb-STMicroelectronics_STM32_STLink_066AFF505487525067181744-if02
+expect: WHO_AM_I = 0x72
