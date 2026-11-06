@@ -4,7 +4,8 @@
 
 int         main(void);
 static void delay(volatile u32 count);
-static void usart2_write_hex(u8 value);
+static void send_line(const char *s);
+static void to_hex(u8 value, char *out);
 
 #define MPU6050_ADDR     0x68 // AD0 low
 #define MPU6050_WHO_AM_I 0x75 // register; reads back 0x68
@@ -28,22 +29,31 @@ int main(void) {
     i2c_init();
 
     while (1) {
-        u8 id = i2c_read_reg(MPU6050_ADDR, MPU6050_WHO_AM_I);
-
-        usart2_write_str("WHO_AM_I = ");
-        usart2_write_hex(id);
-        usart2_write_str("\r\n");
+        u8 id;
+        if (i2c_read_reg(MPU6050_ADDR, MPU6050_WHO_AM_I, &id) == 0) {
+            char line[] = "WHO_AM_I = 0x??\r\n";
+            to_hex(id, &line[13]);
+            send_line(line);
+        } else {
+            send_line("IMU ERROR: no response\r\n");
+        }
 
         delay(500000);
     }
 }
 
-static void usart2_write_hex(u8 value) {
+// same line to the PC monitor (USART2) and the ESP32 (USART1)
+static void send_line(const char *s) {
+    usart2_write_str(s);
+    usart1_write_str(s);
+}
+
+// write a byte as two hex characters into out[0], out[1]
+static void to_hex(u8 value, char *out) {
     const char *digits = "0123456789ABCDEF";
 
-    usart2_write_str("0x");
-    usart2_write_char(digits[value >> 4]);
-    usart2_write_char(digits[value & 0x0F]);
+    out[0] = digits[value >> 4];
+    out[1] = digits[value & 0x0F];
 }
 
 static void delay(volatile u32 count) {
